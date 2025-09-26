@@ -3,7 +3,8 @@ import requests
 import os
 import snscrape.modules.twitter as sntwitter
 import instaloader
-
+USERNAME = "sancyfrancis"
+SESSION_FILE = r"C:\Users\Sancy Francis\AppData\Local\Instaloader\session-sancyfrancis"
 class DataCollector:
     def __init__(self):
         self.weather_api = os.getenv('WEATHER_API_KEY')
@@ -13,7 +14,7 @@ class DataCollector:
         """Weather affects mood - sunny = positive vibes"""
         url = f"http://api.openweathermap.org/data/2.5/weather?q={location}&appid={self.weather_api}"
         response = requests.get(url).json()
-        
+        print(f"[DEBUG] Weather API response: {response}")
         weather_score = 50  # baseline
         if 'Clear' in response['weather'][0]['main']:
             weather_score += 20
@@ -29,49 +30,39 @@ class DataCollector:
     def get_social_sentiment(self, location: str):
         """Analyze recent social posts (Twitter first, fallback to Instagram hashtags)"""
 
-        tweets = []
-        try:
-            # Try Twitter first
-            query = f"{location} lang:en"
-            for i, tweet in enumerate(sntwitter.TwitterSearchScraper(query).get_items()):
-                if i >= 20:
-                    break
-                tweets.append(tweet.content)
-        except Exception as e:
-            print(f"Twitter fetch failed: {e}")
+        posts = []
+        source = "Unknown"
 
-        # If Twitter failed or returned no results → fallback to Instagram
-        if not tweets:
+
+        # Fallback to Reddit if Twitter fails or returns no posts
+        if not posts:
             try:
-                import ssl
-                ssl._create_default_https_context = ssl._create_unverified_context
-                print(f"Falling back to Instagram hashtag search for: {location}")
-                L = instaloader.Instaloader(download_pictures=False,
-                                            download_videos=False,
-                                            download_comments=False,
-                                            save_metadata=False,
-                                            download_video_thumbnails=False,
-                                            quiet=True)
-                posts = instaloader.Hashtag.from_name(L.context, location.lower()).get_posts()
-
-                for i, post in enumerate(posts):
-                    if i >= 20:
-                        break
-                    tweets.append(post.caption or "")
+                print(f"[INFO] Falling back to Reddit for: {location}")
+                headers = {'User-agent': 'vibecheck-bot'}
+                url = f"https://www.reddit.com/search.json?q={location}&limit=20"
+                response = requests.get(url, headers=headers)
+                if response.status_code == 200:
+                    data = response.json()
+                    for post in data.get("data", {}).get("children", []):
+                        title = post["data"].get("title", "")
+                        if title:
+                            posts.append(title)
+                if posts:
+                    source = "Reddit"
             except Exception as e:
-                print(f"Instagram fetch failed: {e}")
+                print(f"[ERROR] Reddit fetch failed: {e}")
 
-        # Sentiment analysis (basic, optional)
+        # Sentiment Analysis
         try:
-            from textblob import TextBlob
-            sentiments = [TextBlob(t).sentiment.polarity for t in tweets if t]
-            sentiment_score = (sum(sentiments) / len(sentiments) * 50) + 50 if sentiments else 50
-        except ImportError:
+            sentiments = [TextBlob(p).sentiment.polarity for p in posts if p]
+            sentiment_score = (sum(sentiments) / len(sentiments)) * 50 + 50 if sentiments else 50
+        except Exception as e:
+            print(f"[ERROR] Sentiment analysis failed: {e}")
             sentiment_score = 50
 
         return {
-            "posts": tweets[:5],      # Top 5 posts (tweets or Instagram captions)
-            "post_count": len(tweets),
+            "posts": posts[:5],  # Top 5 posts only
+            "post_count": len(posts),
             "sentiment_score": round(sentiment_score, 2),
-            "source": "Twitter" if tweets and "Twitter" in str(type(tweets[0])) else "Instagram"
+            "source": source
         }

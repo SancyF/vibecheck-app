@@ -71,6 +71,6 @@ class VibeAnalyzer:
             'factors': {
                 'weather': weather_data['weather_score'],
                 'social': ai_analysis['ai_score'],
-                'tweets_analyzed': social_data['tweet_count']
+                'posts_analyzed': social_data['post_count']
             }
         }

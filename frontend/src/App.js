@@ -176,19 +176,19 @@ function App() {
                 <div className="text-center">
                   <div className="text-2xl mb-2">📊</div>
                   <div className="text-white font-semibold">Data Points</div>
-                  <div className="text-white/70">{vibeData.vibe.factors.tweets_analyzed || 0} tweets</div>
+                  <div className="text-white/70">{vibeData.vibe.factors.posts_analyzed || 0} posts</div>
                 </div>
               </div>
             )}
 
-            {/* Sample Tweets */}
-            {vibeData.raw_data?.sample_tweets && vibeData.raw_data.sample_tweets.length > 0 && (
+            {/* Sample Posts */}
+            {vibeData.raw_data?.sample_posts && vibeData.raw_data.sample_posts.length > 0 && (
               <div>
                 <h4 className="text-lg font-semibold text-white mb-4">Recent Mentions:</h4>
                 <div className="space-y-3">
-                  {vibeData.raw_data.sample_tweets.map((tweet, idx) => (
+                  {vibeData.raw_data.sample_posts.map((post, idx) => (
                     <div key={idx} className="bg-white/10 p-4 rounded-xl">
-                      <p className="text-white/90 text-sm">"{tweet.substring(0, 150)}..."</p>
+                      <p className="text-white/90 text-sm">"{post.substring(0, 150)}..."</p>
                     </div>
                   ))}
                 </div>
