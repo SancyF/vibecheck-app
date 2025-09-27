@@ -1,4 +1,4 @@
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE = process.env.REACT_APP_API_URL || 'https://g6sbvsklhl.execute-api.us-east-1.amazonaws.com/dev';
 
 export const fetchVibeData = async (location) => {
   const response = await fetch(`${API_BASE}/api/vibe/${encodeURIComponent(location)}`);
