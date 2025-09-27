@@ -170,7 +170,8 @@ def popular_locations():
         "Bangalore",
         "Marina Beach",
         "Goa",
-        "Mysore"
+        "Mysore",
+        "Trivandrum"
     ]
     return jsonify({'locations': demo_locations})
 @app.errorhandler(Exception)

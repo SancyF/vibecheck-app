@@ -45,29 +45,38 @@ class DataCollector:
             weather_score = 50  # baseline
             weather_main = data['weather'][0]['main']
             
-            # Improve weather scoring
-            if weather_main in ['Clear', 'Sunny']:
-                weather_score = 75
-            elif weather_main in ['Clouds', 'Partly Cloudy']:
-                weather_score = 60
-            elif weather_main in ['Rain', 'Drizzle']:
-                weather_score = 35
-            elif weather_main in ['Thunderstorm', 'Snow']:
-                weather_score = 25
-            else:
-                weather_score = 50
-                
+            # Improve weather scoring with more variety
+            weather_mapping = {
+                'Clear': 80, 'Sunny': 85,
+                'Clouds': 60, 'Few clouds': 65, 'Scattered clouds': 58, 'Broken clouds': 55,
+                'Rain': 35, 'Light rain': 40, 'Heavy rain': 25,
+                'Drizzle': 45, 'Light drizzle': 50,
+                'Thunderstorm': 20, 'Snow': 30, 'Mist': 45, 'Fog': 40,
+                'Haze': 50, 'Smoke': 35
+            }
+            
+            # Get weather score from mapping, fallback to description-based scoring
+            weather_desc = data['weather'][0]['description'].title()
+            weather_score = weather_mapping.get(weather_main, 
+                           weather_mapping.get(weather_desc, 50))
+            
             # Adjust for temperature (convert from Kelvin to Celsius)
             temp_celsius = data['main']['temp'] - 273.15
-            if 20 <= temp_celsius <= 30:  # Comfortable temperature
-                weather_score += 10
-            elif temp_celsius > 35 or temp_celsius < 10:  # Extreme temperatures
-                weather_score -= 10
+            
+            # Temperature comfort adjustments
+            if 18 <= temp_celsius <= 28:  # Perfect temperature
+                weather_score += 8
+            elif 15 <= temp_celsius <= 32:  # Good temperature
+                weather_score += 3
+            elif temp_celsius > 38 or temp_celsius < 5:  # Extreme temperatures
+                weather_score -= 12
+            elif temp_celsius > 35 or temp_celsius < 10:  # Uncomfortable
+                weather_score -= 6
                 
             return {
-                'weather_score': max(10, min(100, weather_score)),
+                'weather_score': max(10, min(95, weather_score)),
                 'condition': data['weather'][0]['description'],
-                'temp': temp_celsius
+                'temp': round(temp_celsius, 1)
             }
         except Exception as e:
             print(f"[ERROR] Weather API failed: {e}")
